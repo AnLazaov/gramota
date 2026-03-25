@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <title>Универсален Генератор на Грамоти</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Playfair+Display:ital,wght@0,700;1,400&family=Kelly+Slab&family=Tenor+Sans&family=Comfortaa:wght@700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold-grad: linear-gradient(135deg, #cfb07e 0%, #a67c00 50%, #5d461a 100%);
+            --name-color: #b21f1f; /* Цвят по подразбиране */
+        }
+
+        body { 
+            background: #2c2c2c; 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            padding: 20px; 
+            font-family: 'Tenor Sans', sans-serif; 
+        }
+
+        /* ПАНЕЛ ЗА УПРАВЛЕНИЕ */
+        #admin-panel {
+            background: #fff; 
+            padding: 20px; 
+            border-radius: 12px; 
+            margin-bottom: 20px;
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 20px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            z-index: 100; 
+            align-items: flex-end;
+        }
+
+        .tool-group { display: flex; flex-direction: column; gap: 5px; }
+        label { font-size: 11px; font-weight: bold; color: #777; text-transform: uppercase; }
+        select, input, button { padding: 8px; border: 1px solid #ddd; border-radius: 5px; }
+
+        /* ГРАМОТА (A4 Landscape) */
+        .cert-canvas {
+            width: 297mm; height: 210mm; 
+            background: #fff;
+            position: relative; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center;
+            box-shadow: 0 0 50px rgba(0,0,0,0.5); 
+            box-sizing: border-box;
+            transition: 0.3s;
+        }
+
+        /* CSS РАМКИ */
+        .frame-classic { border: 15px solid; border-image: linear-gradient(45deg, #a67c00, #cfb07e, #5d461a) 1; padding: 10px; }
+        .frame-classic::after { content: ''; position: absolute; top: 10px; left: 10px; right: 10px; bottom: 10px; border: 2px solid #a67c00; pointer-events: none; }
+        
+        .frame-modern { border: 20px solid #2c3e50; padding: 5px; }
+        .frame-modern::after { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 5px solid #a67c00; box-sizing: border-box; pointer-events: none; }
+        
+        .frame-art { border: 1px solid #eee; }
+        .frame-art::before { content: ''; position: absolute; top: 15mm; left: 15mm; width: 25mm; height: 25mm; border-top: 5px solid #a67c00; border-left: 5px solid #a67c00; }
+        .frame-art::after { content: ''; position: absolute; bottom: 15mm; right: 15mm; width: 25mm; height: 25mm; border-bottom: 5px solid #a67c00; border-right: 5px solid #a67c00; }
+        
+        .frame-none { border: none; }
+
+        .content {
+            width: 85%; height: 80%; z-index: 10;
+            display: flex; flex-direction: column; 
+            justify-content: space-between; text-align: center;
+        }
+
+        .title {
+            font-family: 'Cinzel', serif; font-size: 105px; margin: 0;
+            background: var(--gold-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            filter: drop-shadow(3px 3px 2px rgba(0,0,0,0.15)); letter-spacing: 12px;
+        }
+
+        .subtitle { font-family: 'Playfair Display', serif; font-size: 30px; font-style: italic; color: #444; }
+
+        /* ИМЕ - ДИНАМИЧЕН ЦВЯТ И ШРИФТ */
+        .student-name {
+            font-family: 'Kelly Slab', serif; 
+            font-size: 85px; 
+            color: var(--name-color);
+            margin: 10px 0; outline: none; display: inline-block; min-width: 650px;
+        }
+
+        .label-style { font-family: 'Tenor Sans', sans-serif; font-size: 14px; text-transform: uppercase; letter-spacing: 4px; color: #999; }
+        .reason { font-family: 'Tenor Sans', sans-serif; font-size: 24px; line-height: 1.5; color: #333; outline: none; }
+
+        .footer { display: flex; justify-content: space-around; align-items: flex-end; width: 100%; }
+        .sign-block { width: 250px; border-top: 1px solid #a67c00; padding-top: 8px; }
+        
+        #logo-slot { width: 130px; height: 130px; display: flex; justify-content: center; align-items: center; }
+        #logo-img { max-width: 100%; max-height: 100%; }
+
+        @media print {
+            #admin-panel { display: none; }
+            body { background: white; padding: 0; }
+            .cert-canvas { box-shadow: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="admin-panel">
+        <div class="tool-group">
+            <label>🖼️ Рамка</label>
+            <select onchange="updateFrame(this.value)">
+                <option value="frame-classic">Класик (Златна)</option>
+                <option value="frame-modern">Модерна (Строга)</option>
+                <option value="frame-art">Арт (Ъгли)</option>
+                <option value="frame-none">Без рамка</option>
+            </select>
+        </div>
+
+        <div class="tool-group">
+            <label>🖋️ Шрифт за името</label>
+            <select onchange="updateNameFont(this.value)">
+                <option value="'Kelly Slab', serif">Технически (Kelly Slab)</option>
+                <option value="'Tenor Sans', sans-serif">Благороден (Tenor Sans)</option>
+                <option value="'Comfortaa', cursive">Модерен (Comfortaa)</option>
+                <option value="'Cinzel', serif">Величествен (Cinzel)</option>
+            </select>
+        </div>
+
+        <div class="tool-group">
+            <label>🎨 Цвят на името</label>
+            <input type="color" value="#b21f1f" onchange="updateNameColor(this.value)">
+        </div>
+
+        <div class="tool-group">
+            <label>🛡️ Лого / Печат</label>
+            <div style="display:flex; gap:5px;">
+                <input type="file" accept="image/*" onchange="loadLogo(event)" style="width:140px;">
+                <button onclick="document.getElementById('logo-img').style.display='none'">❌</button>
+            </div>
+        </div>
+
+        <button onclick="window.print()" style="background: #27ae60; color: white; border: none; padding: 10px 20px; font-weight: bold; cursor: pointer;">🖨️ ПЕЧАТ</button>
+    </div>
+
+    <div class="cert-canvas frame-classic" id="certPage">
+        <div class="content">
+            <div>
+                <h1 class="title">ГРАМОТА</h1>
+                <div class="subtitle" contenteditable="true">за изключителни постижения</div>
+            </div>
+
+            <div>
+                <div class="label-style">присъжда се на</div>
+                <div class="student-name" id="nameBox" contenteditable="true">Име и Фамилия</div>
+            </div>
+
+            <div class="reason" contenteditable="true">
+                за показани завидни знания и бърза мисъл <br>
+                в проведеното състезание
+            </div>
+
+            <div class="footer">
+                <div class="sign-block">
+                    <div style="font-size: 20px;" contenteditable="true">25.03.2026 г.</div>
+                    <div class="label-style" style="font-size: 10px;">Дата</div>
+                </div>
+
+                <div id="logo-slot">
+                    <img src="https://i.imgur.com/rN2w9uX.png" id="logo-img">
+                </div>
+
+                <div class="sign-block">
+                    <div style="font-size: 20px;" contenteditable="true">Име и Фамилия</div>
+                    <div class="label-style" style="font-size: 10px;">Преподавател</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateFrame(f) {
+            const c = document.getElementById('certPage');
+            c.className = 'cert-canvas ' + f;
+        }
+
+        function updateNameFont(f) {
+            document.getElementById('nameBox').style.fontFamily = f;
+        }
+
+        function updateNameColor(c) {
+            document.documentElement.style.setProperty('--name-color', c);
+        }
+
+        function loadLogo(e) {
+            const r = new FileReader();
+            r.onload = function(){
+                const out = document.getElementById('logo-img');
+                out.src = r.result;
+                out.style.display = 'block';
+            };
+            r.readAsDataURL(e.target.files[0]);
+        }
+    </script>
+</body>
+</html>
